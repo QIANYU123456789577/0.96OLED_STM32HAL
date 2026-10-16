@@ -339,23 +339,24 @@ void OLED_ShowChar(uint8_t x, uint8_t y, char ch, uint8_t font, uint8_t color)
 
 void OLED_ShowString(uint8_t x, uint8_t y, const char *str, uint8_t font, uint8_t color)
 {
-    uint8_t step = (font == OLED_FONT_6X8) ? 6 : 8;   /* 字宽即行高 */
+    uint8_t step_x = (font == OLED_FONT_6X8) ? 6 : 8;   /* 字宽：横向步进 */
+    uint8_t step_y = (font == OLED_FONT_6X8) ? 8 : 16;  /* 字高：换行行距 */
 
     while (*str != '\0') {
         if (*str == '\n') {
             x = 0;
-            y = (uint8_t)(y + step);
+            y = (uint8_t)(y + step_y);
         } else if (*str == '\r') {
             x = 0;
         } else {
             OLED_ShowChar(x, y, *str, font, color);
-            x = (uint8_t)(x + step);
-            if ((uint8_t)(x + step) > OLED_WIDTH) {   /* 自动换行 */
+            x = (uint8_t)(x + step_x);
+            if ((uint8_t)(x + step_x) > OLED_WIDTH) {   /* 自动换行 */
                 x = 0;
-                y = (uint8_t)(y + step);
+                y = (uint8_t)(y + step_y);
             }
         }
-        if ((uint8_t)(y + step) > OLED_HEIGHT) {      /* 超出屏幕则停止绘制 */
+        if ((uint8_t)(y + step_y) > OLED_HEIGHT) {      /* 超出屏幕则停止绘制 */
             break;
         }
         str++;

@@ -33,8 +33,10 @@ FONT_MONO = "C:/Windows/Fonts/CascadiaMono.ttf"
 CHARS = [chr(c) for c in range(0x20, 0x7F)]  # 0x20 ~ 0x7E，共 95 个字符
 
 # 8x16 由 TrueType 字体渲染生成；(字体文件, 字号, 列宽, 行数, 基线行, 阈值)
+# 字号 18 时大写字母墨高 12 行，配基线行 13：大写占第 1~12 行，
+# g/p/q/y/j 等降部字符伸到第 15 行附近，与常见 8x16 点阵字模的满格竖向占位一致
 FONTS_CFG = [
-    (FONT_MONO, 14, 8, 16, 13, 110),
+    (FONT_MONO, 18, 8, 16, 13, 110),
 ]
 
 
@@ -87,13 +89,16 @@ def render_glyph(font, ascent, ch, width, rows, baseline, thresh=110):
         glyph = glyph.resize((iw, rows), Image.BOX)
         ih = rows
         squeezed = True
-    # 基线对齐：源图中基线在 y=ascent，目标基线行为 baseline
-    yoff = baseline - ascent
+    # 基线对齐：源图中基线在 y=ascent，裁剪图中基线距顶 (ascent - t) 行；
+    # 若做过纵向压缩，基线位置需按压缩比例折算，目标基线行为 baseline
+    src_h = b - t
+    base_in_glyph = (ascent - t) * ih / src_h if src_h > 0 else 0.0
+    yoff = int(round(baseline - base_in_glyph))
     xoff = (width - iw) // 2
     data = [0] * rows
     clip_top = clip_bottom = 0
     for sy in range(ih):
-        ty = sy + yoff + (t - t)  # 相对 crop 左上角
+        ty = sy + yoff
         if ty < 0:
             clip_top += 1
             continue
